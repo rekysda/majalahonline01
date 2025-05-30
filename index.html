@@ -1,77 +1,182 @@
-<!doctype html>
-<html lang="en"> <head>
-<meta name="viewport" content="width = 1050, user-scalable = no" />
-<script type="text/javascript" src="extras/jquery.min.1.7.js"></script>
-<script type="text/javascript" src="extras/modernizr.2.5.3.min.js"></script>
-<link rel="stylesheet" type="text/css" href="css/basic.css">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Majalah Flipbook Fullscreen</title>
+
+  <!-- CSS & JavaScript Eksternal -->
+  <script src="extras/jquery.min.1.7.js"></script>
+  <script src="extras/modernizr.2.5.3.min.js"></script>
+  <link rel="stylesheet" href="css/basic.css" />
+
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      min-height: 100vh;
+      overflow: hidden;
+      background-color: #f0f0f0;
+    }
+
+    .flipbook-viewport {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .flipbook-viewport .container {
+      margin: 0;
+      padding: 0;
+    }
+
+    .flipbook .page {
+      background-color: white;
+      background-repeat: no-repeat;
+      background-size: cover;
+      background-position: center;
+    }
+
+    /* Tombol Fullscreen */
+    .fullscreen-btn {
+      position: fixed;
+      top: 15px;
+      right: 20px;
+      z-index: 9999;
+      padding: 10px 15px;
+      background-color: #333;
+      color: #fff;
+      font-size: 14px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .fullscreen-btn:hover {
+      background-color: #555;
+    }
+  </style>
 </head>
 <body>
 
-<div class="flipbook-viewport">
+  <!-- Tombol Fullscreen -->
+  <button class="fullscreen-btn" onclick="toggleFullscreen()">Fullscreen</button>
+
+  <div class="flipbook-viewport" id="flipbookContainer">
     <div class="container">
-        <div class="flipbook">
-            </div>
+      <div class="flipbook"></div>
     </div>
-</div>
+  </div>
 
-<script type="text/javascript" src="lib/turn.js"></script> <script type="text/javascript">
+  <script>
+    function setFlipbookDimensions() {
+      const viewport = $('.flipbook-viewport');
+      const container = $('.container');
+      const flipbook = $('.flipbook');
 
-function loadApp() {
-    const flipbook = $('.flipbook');
+      let Vwidth = viewport.width();
+      let Vheight = viewport.height();
+      let bookWidth, bookHeight;
 
-    // --- BAGIAN LOOPING DENGAN JAVASCRIPT ---
-    const image_folder = "images"; // Nama folder tempat gambar disimpan
-    const filename_base = "majalah_page-";
-    const filename_suffix_tag = "_11zon"; // Bagian akhir nama file sebelum ekstensi
-    const file_extension = ".jpg"; // Asumsi ekstensi file
-    const total_pages = 10;
+      const pageAspectRatio = 600 / 461;
 
-    for (let i = 1; i <= total_pages; i++) {
-        // Format nomor halaman utama dengan padding nol menjadi 4 digit
-        let page_number_padded = String(i).padStart(4, '0');
-        
-        // Angka kedua dalam nama file, diasumsikan sama dengan nomor halaman i
-        let middle_number = i; 
-        
-        let image_path = `${image_folder}/${filename_base}${page_number_padded}${file_extension}`;
-        
-        // Buat elemen div baru dan tambahkan ke flipbook
-        $('<div>', {
-            style: `background-image:url('${image_path}')`
-        }).appendTo(flipbook);
+      bookWidth = Math.floor(Vwidth * 0.9);
+      bookHeight = Math.floor(bookWidth * pageAspectRatio);
+
+      if (bookHeight > Vheight * 0.9) {
+        bookHeight = Math.floor(Vheight * 0.9);
+        bookWidth = Math.floor(bookHeight / pageAspectRatio);
+      }
+
+      // Fallback ukuran minimum
+      if (bookWidth < 100 || bookHeight < 100) {
+        bookWidth = 300;
+        bookHeight = Math.floor(bookWidth * pageAspectRatio);
+      }
+
+      container.css({
+        width: bookWidth + 'px',
+        height: bookHeight + 'px'
+      });
+
+      if (flipbook.turn('is')) {
+        flipbook.turn('size', bookWidth, bookHeight);
+      }
+
+      return {
+        width: bookWidth,
+        height: bookHeight
+      };
     }
-    // --- AKHIR BAGIAN LOOPING DENGAN JAVASCRIPT ---
 
-    // Create the flipbook
-    flipbook.turn({
-        // Width
-        width:922,
-        
-        // Height
-        height:600,
+    function loadApp() {
+      const flipbook = $('.flipbook');
+      flipbook.empty();
 
-        // Elevation
+      const image_folder = "images";
+      const filename_base = "majalah_page-";
+      const file_extension = ".jpg";
+      const total_pages = 10;
+
+      for (let i = 1; i <= total_pages; i++) {
+        let page_number_padded = String(i).padStart(4, '0');
+        let image_path = `${image_folder}/${filename_base}${page_number_padded}${file_extension}`;
+        $('<div>', {
+          style: `background-image:url('${image_path}')`
+        }).appendTo(flipbook);
+      }
+
+      const initialDimensions = setFlipbookDimensions();
+
+      flipbook.turn({
+        width: initialDimensions.width,
+        height: initialDimensions.height,
+        display: 'single',
         elevation: 50,
-        
-        // Enable gradients
         gradients: true,
-        
-        // Auto center this flipbook
         autoCenter: true
+      });
+
+      flipbook.bind('turning turned', function () {
+        setFlipbookDimensions();
+      });
+
+      $(window).resize(function () {
+        setFlipbookDimensions();
+      }).trigger('resize');
+    }
+
+    // Toggle Fullscreen Function
+    function toggleFullscreen() {
+      const elem = document.getElementById('flipbookContainer');
+
+      if (!document.fullscreenElement) {
+        elem.requestFullscreen().catch((err) => {
+          alert(`Error attempting to enable fullscreen: ${err.message}`);
+        });
+      } else {
+        document.exitFullscreen();
+      }
+    }
+
+    // Load Turn.js
+    yepnope({
+      test: Modernizr.csstransforms,
+      yep: ['lib/turn.js'],
+      nope: ['lib/turn.html4.min.js'],
+      complete: loadApp
     });
-}
-
-// Load the HTML4 version if there's not CSS transform
-yepnope({
-    test : Modernizr.csstransforms,
-    yep: ['lib/turn.js'], // Pastikan path ini benar
-    nope: ['lib/turn.html4.min.js'], // Pastikan path ini benar
-    // CSS dimuat di <head> atau pastikan path 'css/basic.css' benar jika dimuat oleh yepnope
-    // both: ['css/basic.css'], // Anda sudah memuatnya di <head>, jika tidak pindahkan ke sini
-    complete: loadApp
-});
-
-</script>
+  </script>
 
 </body>
 </html>
