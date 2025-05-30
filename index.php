@@ -14,18 +14,23 @@
 <div class="flipbook-viewport">
 	<div class="container">
 		<div class="flipbook">
-  <?php
+    <?php
     $image_folder = "images"; // Nama folder tempat gambar disimpan
-    $filename_prefix = "majalah_page-";
-    $filename_suffix = ".jpg";
-    $total_pages = 76;
+    $filename_base = "majalah_page-";
+    $filename_suffix_tag = "_11zon"; // Bagian akhir nama file sebelum ekstensi
+    $file_extension = ".jpg"; // Asumsi ekstensi file
+    $total_pages = 50;
 
     for ($i = 1; $i <= $total_pages; $i++) {
-        // Format nomor halaman dengan padding nol menjadi 4 digit (misal: 0001, 0010, 0076)
+        // Format nomor halaman utama dengan padding nol menjadi 4 digit (misal: 0001, 0050)
         $page_number_padded = str_pad($i, 4, '0', STR_PAD_LEFT);
-        $image_path = "{$image_folder}/{$filename_prefix}{$page_number_padded}{$filename_suffix}";
         
-        echo '    <div style="background-image:url(' . $image_path . ')"></div>' . "\n";
+        // Angka kedua dalam nama file, diasumsikan sama dengan nomor halaman $i
+        $middle_number = $i; 
+        
+        $image_path = "{$image_folder}/{$filename_base}{$page_number_padded}_{$middle_number}{$filename_suffix_tag}{$file_extension}";
+        
+        echo '    <div style="background-image:url(\'' . htmlspecialchars($image_path) . '\')"></div>' . "\n";
     }
     ?>
 		</div>
