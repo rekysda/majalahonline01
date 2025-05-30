@@ -24,7 +24,7 @@ function loadApp() {
     const filename_base = "majalah_page-";
     const filename_suffix_tag = "_11zon"; // Bagian akhir nama file sebelum ekstensi
     const file_extension = ".jpg"; // Asumsi ekstensi file
-    const total_pages = 50;
+    const total_pages = 10;
 
     for (let i = 1; i <= total_pages; i++) {
         // Format nomor halaman utama dengan padding nol menjadi 4 digit
@@ -33,7 +33,7 @@ function loadApp() {
         // Angka kedua dalam nama file, diasumsikan sama dengan nomor halaman i
         let middle_number = i; 
         
-        let image_path = `${image_folder}/${filename_base}${page_number_padded}_${middle_number}${filename_suffix_tag}${file_extension}`;
+        let image_path = `${image_folder}/${filename_base}${page_number_padded}${file_extension}`;
         
         // Buat elemen div baru dan tambahkan ke flipbook
         $('<div>', {
