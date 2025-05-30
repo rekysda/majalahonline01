@@ -3,19 +3,33 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Majalah Online</title>
+  <title>Majalah Flipbook</title>
+
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- PDF.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+  <script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
+  </script>
+
+  <!-- jQuery (dibutuhkan oleh Turn.js) -->
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+  <!-- Turn.js (Flipbook) -->
   <script src="https://cdn.jsdelivr.net/gh/blasten/turn.js@4/turn.min.js"></script>
+
   <style>
     #flipbook {
       width: 800px;
       height: 600px;
+      margin: auto;
     }
-    #flipbook .page {
-      background: white;
+    .page {
       width: 400px;
       height: 600px;
+      background: white;
     }
   </style>
 </head>
@@ -23,38 +37,25 @@
   <div id="flipbook" class="shadow-2xl rounded-md overflow-hidden"></div>
 
   <script>
-    const url = 'docs/majalah.pdf'; // ganti dengan path file PDF kamu
+    const url = "docs/majalah.pdf"; // Path ke file PDF
 
-    const renderPDF = async () => {
+    const loadPDF = async () => {
       const pdf = await pdfjsLib.getDocument(url).promise;
-      const pages = pdf.numPages;
-      const flipbook = document.getElementById('flipbook');
+      const totalPages = pdf.numPages;
 
-      for (let i = 1; i <= pages; i++) {
-        const page = await pdf.getPage(i);
+      for (let i = 1; i <= totalPages; i++) {
         const canvas = document.createElement("canvas");
         canvas.className = "page";
         const context = canvas.getContext("2d");
 
+        const page = await pdf.getPage(i);
         const viewport = page.getViewport({ scale: 1.5 });
+
         canvas.height = viewport.height;
         canvas.width = viewport.width;
 
         await page.render({ canvasContext: context, viewport }).promise;
-        flipbook.appendChild(canvas);
+        document.getElementById("flipbook").appendChild(canvas);
       }
 
-      $('#flipbook').turn({
-        width: 800,
-        height: 600,
-        autoCenter: true
-      });
-    };
-
-    pdfjsLib.GlobalWorkerOptions.workerSrc =
-      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
-
-    renderPDF();
-  </script>
-</body>
-</html>
+      // Inisia
