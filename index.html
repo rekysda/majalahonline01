@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en"> <head>
+<meta name="viewport" content="width = 1050, user-scalable = no" />
+<script type="text/javascript" src="extras/jquery.min.1.7.js"></script>
+<script type="text/javascript" src="extras/modernizr.2.5.3.min.js"></script>
+<link rel="stylesheet" type="text/css" href="css/basic.css">
+</head>
+<body>
+
+<div class="flipbook-viewport">
+    <div class="container">
+        <div class="flipbook">
+            </div>
+    </div>
+</div>
+
+<script type="text/javascript" src="lib/turn.js"></script> <script type="text/javascript">
+
+function loadApp() {
+    const flipbook = $('.flipbook');
+
+    // --- BAGIAN LOOPING DENGAN JAVASCRIPT ---
+    const image_folder = "images"; // Nama folder tempat gambar disimpan
+    const filename_base = "majalah_page-";
+    const filename_suffix_tag = "_11zon"; // Bagian akhir nama file sebelum ekstensi
+    const file_extension = ".jpg"; // Asumsi ekstensi file
+    const total_pages = 50;
+
+    for (let i = 1; i <= total_pages; i++) {
+        // Format nomor halaman utama dengan padding nol menjadi 4 digit
+        let page_number_padded = String(i).padStart(4, '0');
+        
+        // Angka kedua dalam nama file, diasumsikan sama dengan nomor halaman i
+        let middle_number = i; 
+        
+        let image_path = `${image_folder}/${filename_base}${page_number_padded}_${middle_number}${filename_suffix_tag}${file_extension}`;
+        
+        // Buat elemen div baru dan tambahkan ke flipbook
+        $('<div>', {
+            style: `background-image:url('${image_path}')`
+        }).appendTo(flipbook);
+    }
+    // --- AKHIR BAGIAN LOOPING DENGAN JAVASCRIPT ---
+
+    // Create the flipbook
+    flipbook.turn({
+        // Width
+        width:922,
+        
+        // Height
+        height:600,
+
+        // Elevation
+        elevation: 50,
+        
+        // Enable gradients
+        gradients: true,
+        
+        // Auto center this flipbook
+        autoCenter: true
+    });
+}
+
+// Load the HTML4 version if there's not CSS transform
+yepnope({
+    test : Modernizr.csstransforms,
+    yep: ['lib/turn.js'], // Pastikan path ini benar
+    nope: ['lib/turn.html4.min.js'], // Pastikan path ini benar
+    // CSS dimuat di <head> atau pastikan path 'css/basic.css' benar jika dimuat oleh yepnope
+    // both: ['css/basic.css'], // Anda sudah memuatnya di <head>, jika tidak pindahkan ke sini
+    complete: loadApp
+});
+
+</script>
+
+</body>
+</html>
