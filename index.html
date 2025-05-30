@@ -1,182 +1,175 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
-  <title>Majalah Flipbook Fullscreen</title>
-
-  <!-- CSS & JavaScript Eksternal -->
-  <script src="extras/jquery.min.1.7.js"></script>
-  <script src="extras/modernizr.2.5.3.min.js"></script>
-  <link rel="stylesheet" href="css/basic.css" />
-
-  <style>
-    *, *::before, *::after {
-      box-sizing: border-box;
-    }
-
-    html, body {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      min-height: 100vh;
-      overflow: hidden;
-      background-color: #f0f0f0;
-    }
-
-    .flipbook-viewport {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-
-    .flipbook-viewport .container {
-      margin: 0;
-      padding: 0;
-    }
-
-    .flipbook .page {
-      background-color: white;
-      background-repeat: no-repeat;
-      background-size: cover;
-      background-position: center;
-    }
-
-    /* Tombol Fullscreen */
-    .fullscreen-btn {
-      position: fixed;
-      top: 15px;
-      right: 20px;
-      z-index: 9999;
-      padding: 10px 15px;
-      background-color: #333;
-      color: #fff;
-      font-size: 14px;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-
-    .fullscreen-btn:hover {
-      background-color: #555;
-    }
-  </style>
+<!doctype html>
+<html lang="en"> <head>
+    <meta charset="UTF-8">
+    <title>Dynamic Looping Flipbook</title>
+    <meta name="viewport" content="width = 1050, user-scalable = no" />
+    <script type="text/javascript" src="extras/jquery.min.1.7.js"></script>
+    <script type="text/javascript" src="extras/modernizr.2.5.3.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* Prevents scrollbars */
+            background-color: #f0f0f0; /* Optional: background for the viewport */
+        }
+        .flipbook-viewport {
+            overflow: hidden;
+            width: 100%;
+            height: 100vh; /* Full viewport height */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .flipbook { /* Turn.js will manage the size of .flipbook */
+            /* background-color: white; */ /* Fallback if pages don't load */
+        }
+        .flipbook > div { /* Styles for each page */
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            /* background-color: #e0e0e0; */ /* Optional: page background if image fails */
+        }
+        /* Basic.css from turn.js might add more specific styling */
+    </style>
 </head>
 <body>
 
-  <!-- Tombol Fullscreen -->
-  <button class="fullscreen-btn" onclick="toggleFullscreen()">Fullscreen</button>
-
-  <div class="flipbook-viewport" id="flipbookContainer">
-    <div class="container">
-      <div class="flipbook"></div>
+<div class="flipbook-viewport">
+    <div class="container"> <div class="flipbook">
+            </div>
     </div>
-  </div>
+</div>
 
-  <script>
-    function setFlipbookDimensions() {
-      const viewport = $('.flipbook-viewport');
-      const container = $('.container');
-      const flipbook = $('.flipbook');
+<script type="text/javascript">
 
-      let Vwidth = viewport.width();
-      let Vheight = viewport.height();
-      let bookWidth, bookHeight;
+// Function to calculate and set flipbook dimensions
+// It can be called before turn.js is initialized to get initial dimensions,
+// and after (on resize) to update an existing turn.js instance.
+function setFlipbookDimensions(flipbookInstance) {
+    const viewport = $('.flipbook-viewport');
+    let newWidth, newHeight;
 
-      const pageAspectRatio = 600 / 461;
+    // Determine desired dimensions for a single page (since display: 'single')
+    // Example: Aim for 90% of viewport, maintaining a portrait aspect ratio (e.g., 3:4)
+    const aspectRatio = 3/4; // Adjust as needed for your page content (width/height)
 
-      bookWidth = Math.floor(Vwidth * 0.9);
-      bookHeight = Math.floor(bookWidth * pageAspectRatio);
+    let viewportWidth = viewport.width();
+    let viewportHeight = viewport.height();
 
-      if (bookHeight > Vheight * 0.9) {
-        bookHeight = Math.floor(Vheight * 0.9);
-        bookWidth = Math.floor(bookHeight / pageAspectRatio);
-      }
+    if ((viewportWidth * 0.9) / (viewportHeight * 0.9) < aspectRatio) {
+        // Viewport is relatively tall, so width is the limiting factor for this aspect ratio
+        newWidth = viewportWidth * 0.9;
+        newHeight = newWidth / aspectRatio;
+    } else {
+        // Viewport is relatively wide, so height is the limiting factor
+        newHeight = viewportHeight * 0.9;
+        newWidth = newHeight * aspectRatio;
+    }
+    
+    // Ensure integer values for dimensions
+    newWidth = Math.floor(newWidth);
+    newHeight = Math.floor(newHeight);
 
-      // Fallback ukuran minimum
-      if (bookWidth < 100 || bookHeight < 100) {
-        bookWidth = 300;
-        bookHeight = Math.floor(bookWidth * pageAspectRatio);
-      }
-
-      container.css({
-        width: bookWidth + 'px',
-        height: bookHeight + 'px'
-      });
-
-      if (flipbook.turn('is')) {
-        flipbook.turn('size', bookWidth, bookHeight);
-      }
-
-      return {
-        width: bookWidth,
-        height: bookHeight
-      };
+    // If the flipbook instance is already created, resize it
+    if (flipbookInstance && flipbookInstance.turn('is')) {
+        flipbookInstance.turn('size', newWidth, newHeight);
     }
 
-    function loadApp() {
-      const flipbook = $('.flipbook');
-      flipbook.empty();
+    return { width: newWidth, height: newHeight };
+}
 
-      const image_folder = "images";
-      const filename_base = "majalah_page-";
-      const file_extension = ".jpg";
-      const total_pages = 10;
 
-      for (let i = 1; i <= total_pages; i++) {
-        let page_number_padded = String(i).padStart(4, '0');
-        let image_path = `${image_folder}/${filename_base}${page_number_padded}${file_extension}`;
+// Main function to load the flipbook application
+function loadApp() {
+    const flipbookElement = $('.flipbook');
+    flipbookElement.empty(); // Clear existing pages, useful for reload/resize scenarios if re-initializing
+
+    // --- Dynamic Image Loading ---
+    const image_folder = "images";       // Folder where images are stored
+    const filename_base = "";            // Base filename (if any, e.g., "page_")
+    const file_extension = ".jpg";       // File extension of the images
+    
+    // Number of pages to load.
+    // Your snippet had 12. If you want the "1 halaman" (single sheet) concept, set this to 2.
+    const total_pages_to_load = 12;
+
+    for (let i = 1; i <= total_pages_to_load; i++) {
+        let image_path = `${image_folder}/${filename_base}${i}${file_extension}`;
+        // Create a div for each page with its background image
         $('<div>', {
-          style: `background-image:url('${image_path}')`
-        }).appendTo(flipbook);
-      }
+            style: `background-image:url('${image_path}')`
+        }).appendTo(flipbookElement);
+    }
+    // --- End Dynamic Image Loading ---
 
-      const initialDimensions = setFlipbookDimensions();
+    // Get initial dimensions before initializing turn.js
+    // Pass null or undefined as flipbookElement is not yet a turn.js instance
+    const initialDimensions = setFlipbookDimensions(null);
 
-      flipbook.turn({
-        width: initialDimensions.width,
-        height: initialDimensions.height,
-        display: 'single',
+    // Initialize Turn.js
+    flipbookElement.turn({
+        width: initialDimensions.width,    // Width of a single page
+        height: initialDimensions.height,   // Height of a single page
+        display: 'single',                 // Display one page at a time
         elevation: 50,
         gradients: true,
-        autoCenter: true
-      });
-
-      flipbook.bind('turning turned', function () {
-        setFlipbookDimensions();
-      });
-
-      $(window).resize(function () {
-        setFlipbookDimensions();
-      }).trigger('resize');
-    }
-
-    // Toggle Fullscreen Function
-    function toggleFullscreen() {
-      const elem = document.getElementById('flipbookContainer');
-
-      if (!document.fullscreenElement) {
-        elem.requestFullscreen().catch((err) => {
-          alert(`Error attempting to enable fullscreen: ${err.message}`);
-        });
-      } else {
-        document.exitFullscreen();
-      }
-    }
-
-    // Load Turn.js
-    yepnope({
-      test: Modernizr.csstransforms,
-      yep: ['lib/turn.js'],
-      nope: ['lib/turn.html4.min.js'],
-      complete: loadApp
+        autoCenter: true                   // Center the current page
     });
-  </script>
+
+    // Looping logic for the flipbook
+    flipbookElement.on('turning', function(event, nextPage, view) {
+        var book = $(this);
+        var totalPagesInBook = book.turn('pages'); // Get total pages from turn.js instance
+
+        if (totalPagesInBook <= 1) { // No looping if only one page or less
+            return;
+        }
+
+        // If trying to turn to a page before the first page (e.g., nextPage is < 1)
+        if (nextPage < 1) {
+            event.preventDefault(); // Prevent the default turn action
+            book.turn('page', totalPagesInBook); // Go to the last page
+        }
+        // If trying to turn to a page after the last page
+        else if (nextPage > totalPagesInBook) {
+            event.preventDefault(); // Prevent the default turn action
+            book.turn('page', 1);    // Go to the first page
+        }
+    });
+
+    // Optional: Keyboard navigation (left/right arrows)
+    $(document).on('keydown', function(e){
+        var previousKey = 37, // Left arrow key code
+            nextKey = 39;     // Right arrow key code
+
+        if (e.keyCode === previousKey) {
+            flipbookElement.turn('previous');
+            e.preventDefault(); // Prevent default browser scroll
+        } else if (e.keyCode === nextKey) {
+            flipbookElement.turn('next');
+            e.preventDefault(); // Prevent default browser scroll
+        }
+    });
+    
+    // Handle window resize to adjust flipbook dimensions
+    $(window).on('resize', function() {
+        // Pass the flipbook instance to the dimension function so it can resize it
+        setFlipbookDimensions(flipbookElement);
+    }).trigger('resize'); // Call once on load to set initial responsive size after turn.js is ready
+}
+
+// Load turn.js and its dependencies using yepnope
+// Ensure paths are correct relative to your HTML file location
+yepnope({
+    test: Modernizr.csstransforms,
+    yep: ['lib/turn.js'],                             // Main turn.js library
+    nope: ['lib/turn.html4.min.js'],                  // Fallback for older browsers
+    both: ['css/basic.css'/*, 'css/custom-styles.css'*/], // Basic CSS for turn.js.
+                                                      // You can add your own custom CSS file here.
+    complete: loadApp                                 // Function to call once scripts are loaded
+});
+
+</script>
 
 </body>
 </html>
